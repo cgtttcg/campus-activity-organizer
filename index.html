@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="学院活动信息整理器：录入、筛选并管理讲座、比赛、晚会和社团活动。">
+  <title>学院活动信息整理器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --blue-50: #eef6ff;
+      --blue-100: #dbeafe;
+      --blue-200: #bfdbfe;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --cyan-600: #0891b2;
+      --ink: #0b1736;
+      --text: #334155;
+      --muted: #6b7a90;
+      --line: #e2e8f0;
+      --danger: #dc2626;
+      --white: #ffffff;
+      --radius-lg: 30px;
+      --radius-md: 22px;
+      --gradient-blue: linear-gradient(135deg, #2563eb 0%, #3b82f6 52%, #0ea5e9 100%);
+      --shadow-panel: 0 2px 6px rgba(15, 23, 42, 0.025), 0 34px 74px -44px rgba(30, 64, 175, 0.5);
+      --shadow-card: 0 2px 5px rgba(15, 23, 42, 0.02), 0 18px 34px -30px rgba(30, 64, 175, 0.44);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background-color: #f6f9ff;
+      background-image:
+        radial-gradient(ellipse at 7% -10%, rgba(147, 197, 253, 0.42), transparent 44%),
+        radial-gradient(ellipse at 96% 1%, rgba(186, 230, 253, 0.38), transparent 36%),
+        radial-gradient(ellipse at 50% 112%, rgba(224, 231, 255, 0.5), transparent 52%),
+        linear-gradient(180deg, #fbfdff 0%, #f3f8ff 48%, #fbfdff 100%);
+      background-attachment: fixed;
+      font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(37, 99, 235, 0.032) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.032) 1px, transparent 1px);
+      background-size: 72px 72px;
+      content: "";
+      pointer-events: none;
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 74%);
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 74%);
+    }
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+    }
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(59, 130, 246, 0.32);
+      outline-offset: 2px;
+    }
+    [hidden] {
+      display: none !important;
+    }
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      width: min(1220px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 54px 0 36px;
+    }
+    /* ---------- 顶部标题 ---------- */
+    .app-header {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 40px;
+      margin-bottom: 34px;
+      padding-top: 2px;
+      isolation: isolate;
+    }
+    .app-header::before {
+      position: absolute;
+      top: -72px;
+      left: -90px;
+      z-index: -1;
+      width: 430px;
+      height: 230px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12), transparent 66%);
+      content: "";
+      filter: blur(8px);
+      pointer-events: none;
+    }
+    .header-main {
+      max-width: 760px;
+    }
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 18px;
+      padding: 8px 13px;
+      border: 1px solid rgba(191, 219, 254, 0.9);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--blue-700);
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      box-shadow: 0 8px 22px -18px rgba(37, 99, 235, 0.6);
+      backdrop-filter: blur(10px);
+    }
+    .kicker-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--blue-500);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    }
+    h1 {
+      margin: 0;
+      color: #0b1736;
+      font-size: clamp(2.55rem, 5vw, 4.15rem);
+      font-weight: 800;
+      line-height: 1.03;
+      letter-spacing: -0.055em;
+      text-wrap: balance;
+    }
+    h1::after {
+      display: block;
+      width: 88px;
+      height: 5px;
+      margin-top: 20px;
+      border-radius: 999px;
+      background: var(--gradient-blue);
+      box-shadow: 0 5px 14px rgba(37, 99, 235, 0.25);
+      content: "";
+    }
+    h1 span {
+      color: transparent;
+      background: linear-gradient(120deg, #1d4ed8 0%, #2563eb 48%, #0891b2 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      max-width: 620px;
+      margin: 19px 0 0;
+      color: #5d6b82;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+    .local-badge {
+      display: flex;
+      flex: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.92);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--blue-700);
+      box-shadow: 0 16px 40px -30px rgba(15, 23, 42, 0.45), inset 0 1px 0 #ffffff;
+      backdrop-filter: blur(16px);
+    }
+    .local-badge svg {
+      flex: none;
+      width: 38px;
+      height: 38px;
+      padding: 9px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      color: var(--blue-600);
+    }
+    .local-badge span {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .local-badge strong {
+      font-size: 13px;
+      line-height: 1.3;
+    }
+    .local-badge small {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    /* ---------- 主体双栏布局 ---------- */
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(330px, 390px) minmax(0, 1fr);
+      align-items: start;
+      gap: 26px;
+    }
+    .panel {
+      border: 1px solid rgba(226, 236, 248, 0.9);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow-panel);
+      backdrop-filter: blur(8px);
+    }
+    .form-panel {
+      position: sticky;
+      top: 24px;
+      overflow: hidden;
+      padding: 30px;
+      border-color: rgba(219, 234, 254, 0.88);
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 251, 255, 0.98) 52%, rgba(237, 246, 255, 0.96) 100%);
+    }
+    .form-panel::before {
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: 2;
+      height: 5px;
+      background: linear-gradient(90deg, #2563eb, #38bdf8 68%, #a5b4fc);
+      content: "";
+    }
+    .form-panel::after {
+      position: absolute;
+      top: -82px;
+      right: -64px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.17), transparent 68%);
+      content: "";
+      pointer-events: none;
+    }
+    .form-panel > * {
+      position: relative;
+      z-index: 1;
+    }
+    .list-panel {
+      position: relative;
+      min-height: 650px;
+      overflow: hidden;
+      padding: 30px;
+      border-color: rgba(231, 239, 249, 0.95);
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+    .list-panel::before {
+      position: absolute;
+      top: -120px;
+      right: -100px;
+      width: 290px;
+      height: 290px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(186, 230, 253, 0.34), transparent 70%);
+      content: "";
+      pointer-events: none;
+    }
+    .list-panel > * {
+      position: relative;
+      z-index: 1;
+    }
+    .panel-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .section-index {
+      display: grid;
+      flex: none;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 13px;
+      background: var(--gradient-blue);
+      color: var(--white);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      box-shadow: 0 10px 20px -12px rgba(37, 99, 235, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    .panel-heading h2 {
+      margin: 3px 0 5px;
+      color: #12213f;
+      font-size: 19.5px;
+      font-weight: 800;
+      line-height: 1.3;
+      letter-spacing: -0.025em;
+    }
+    .panel-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.6;
+    }
+    /* ---------- 表单 ---------- */
+    .field {
+      margin-bottom: 19px;
+    }
+    .field label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 8px;
+      color: #24314d;
+      font-size: 13px;
+      font-weight: 700;
+      transition: color 0.2s ease;
+    }
+    .field:focus-within label {
+      color: var(--blue-700);
+    }
+    .required {
+      color: #ef4444;
+    }
+    .optional {
+      margin-left: 3px;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid #d9e6f5;
+      border-radius: 14px;
+      background-color: rgba(255, 255, 255, 0.88);
+      color: var(--ink);
+      padding: 12px 14px;
+      font-size: 14px;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.025), 0 1px 0 rgba(255, 255, 255, 0.9);
+      transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .field input,
+    .field select {
+      height: 48px;
+    }
+    .field select {
+      padding-right: 42px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .field textarea {
+      min-height: 112px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+    .field input::placeholder,
+    .field textarea::placeholder {
+      color: #94a3b8;
+    }
+    .field input:hover,
+    .field select:hover,
+    .field textarea:hover {
+      border-color: #b8d4ff;
+      background-color: #ffffff;
+      box-shadow: 0 5px 16px -14px rgba(37, 99, 235, 0.5);
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--blue-500);
+      outline: none;
+      background-color: var(--white);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 10px 24px -20px rgba(37, 99, 235, 0.5);
+    }
+    .field input.is-invalid,
+    .field select.is-invalid,
+    .field textarea.is-invalid {
+      border-color: #f87171;
+      background-color: #fffafa;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.06);
+    }
+    .field input.is-invalid:focus,
+    .field select.is-invalid:focus,
+    .field textarea.is-invalid:focus {
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    }
+    .field input::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      opacity: 0.58;
+      transition: opacity 0.2s ease;
+    }
+    .field input::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .error-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin: 8px 2px 0;
+      color: var(--danger);
+      font-size: 11.5px;
+      line-height: 1.5;
+    }
+    .error-message::before {
+      display: inline-grid;
+      flex: none;
+      width: 14px;
+      height: 14px;
+      place-items: center;
+      margin-top: 1px;
+      border-radius: 50%;
+      background: #fee2e2;
+      color: #dc2626;
+      content: "!";
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .submit-button {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: 100%;
+      margin-top: 3px;
+      overflow: hidden;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--gradient-blue);
+      color: var(--white);
+      font-size: 14.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      box-shadow: 0 14px 26px -12px rgba(37, 99, 235, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+    .submit-button::before {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 22%, rgba(255, 255, 255, 0.28) 46%, transparent 70%);
+      content: "";
+      pointer-events: none;
+      transform: translateX(-120%);
+      transition: transform 0.55s ease;
+    }
+    .submit-button:hover {
+      filter: brightness(1.04);
+      transform: translateY(-2px);
+      box-shadow: 0 20px 32px -13px rgba(37, 99, 235, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    .submit-button:hover::before {
+      transform: translateX(120%);
+    }
+    .submit-button:active {
+      transform: translateY(0) scale(0.995);
+      box-shadow: 0 8px 18px -12px rgba(37, 99, 235, 0.62);
+    }
+    .submit-button svg,
+    .submit-button span {
+      position: relative;
+      z-index: 1;
+    }
+    .submit-button svg {
+      width: 17px;
+      height: 17px;
+    }
+    .storage-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 14px 0 0;
+      color: #8493a8;
+      font-size: 10.5px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .storage-note svg {
+      width: 12px;
+      height: 12px;
+      flex: none;
+    }
+    /* ---------- 活动列表头部与筛选 ---------- */
+    .list-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .list-header .panel-heading {
+      margin-bottom: 0;
+    }
+    .sort-hint {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      padding: 7px 10px;
+      border: 1px solid #e3edf9;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      color: #6b7a90;
+      font-size: 10.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px -10px rgba(30, 64, 175, 0.4);
+    }
+    .sort-hint svg {
+      width: 13px;
+      height: 13px;
+      color: var(--blue-500);
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+      padding: 7px;
+      border: 1px solid #e3ecf8;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+      box-shadow: inset 0 1px 3px rgba(30, 64, 175, 0.035);
+    }
+    .filter-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      background: transparent;
+      color: #526179;
+      font-size: 12.5px;
+      font-weight: 600;
+      line-height: 1;
+      transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .filter-button::before {
+      width: 6px;
+      height: 6px;
+      flex: none;
+      border-radius: 50%;
+      background: #cbd5e1;
+      content: "";
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .filter-button[data-filter="all"]::before {
+      background: #60a5fa;
+    }
+    .filter-button[data-filter="讲座"]::before {
+      background: #0ea5e9;
+    }
+    .filter-button[data-filter="比赛"]::before {
+      background: #f59e0b;
+    }
+    .filter-button[data-filter="晚会"]::before {
+      background: #ec4899;
+    }
+    .filter-button[data-filter="社团"]::before {
+      background: #22c55e;
+    }
+    .filter-button[data-filter="其他"]::before {
+      background: #8b5cf6;
+    }
+    .filter-button:hover {
+      border-color: #d9e8fa;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--blue-700);
+      box-shadow: 0 5px 14px -10px rgba(30, 64, 175, 0.55);
+      transform: translateY(-1px);
+    }
+    .filter-button[aria-pressed="true"] {
+      border-color: rgba(255, 255, 255, 0.24);
+      background: var(--gradient-blue);
+      color: var(--white);
+      box-shadow: 0 8px 18px -8px rgba(37, 99, 235, 0.68), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+    }
+    .filter-button[aria-pressed="true"]::before {
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.16);
+    }
+    .filter-count {
+      display: inline-grid;
+      min-width: 20px;
+      height: 19px;
+      place-items: center;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.16);
+      color: #51627a;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .filter-button[aria-pressed="true"] .filter-count {
+      background: rgba(255, 255, 255, 0.22);
+      color: var(--white);
+    }
+    /* ---------- 活动卡片 ---------- */
+    .activity-list {
+      display: grid;
+      gap: 14px;
+    }
+    .activity-card {
+      --cat: #0369a1;
+      --cat-soft: #e0f2fe;
+      position: relative;
+      display: grid;
+      grid-template-columns: 80px minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
+      overflow: hidden;
+      padding: 18px 20px 18px 18px;
+      border: 1px solid #e6eef9;
+      border-left: 6px solid var(--cat);
+      border-radius: 22px;
+      background: linear-gradient(135deg, #ffffff 0%, #fdfeff 58%, var(--cat-soft) 185%);
+      box-shadow: var(--shadow-card);
+      animation: card-in 0.24s ease both;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .activity-card::after {
+      position: absolute;
+      top: -52px;
+      right: -40px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: var(--cat-soft);
+      content: "";
+      opacity: 0.52;
+      pointer-events: none;
+    }
+    .activity-card > * {
+      position: relative;
+      z-index: 1;
+    }
+    .activity-card:hover {
+      border-color: #d4e3f6;
+      border-left-color: var(--cat);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.035), 0 26px 42px -32px rgba(30, 64, 175, 0.52);
+      transform: translateY(-3px);
+    }
+    .activity-card.cat-lecture {
+      --cat: #0369a1;
+      --cat-soft: #e0f2fe;
+    }
+    .activity-card.cat-competition {
+      --cat: #b45309;
+      --cat-soft: #fef3c7;
+    }
+    .activity-card.cat-gala {
+      --cat: #be185d;
+      --cat-soft: #fce7f3;
+    }
+    .activity-card.cat-club {
+      --cat: #15803d;
+      --cat-soft: #dcfce7;
+    }
+    .activity-card.cat-other {
+      --cat: #6d28d9;
+      --cat-soft: #ede9fe;
+    }
+    .date-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 84px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      border-radius: 16px;
+      background: linear-gradient(155deg, #ffffff 8%, var(--cat-soft) 100%);
+      color: var(--cat);
+      box-shadow: inset 0 1px 0 #ffffff, 0 10px 20px -18px var(--cat);
+    }
+    .date-day {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.055em;
+    }
+    .date-month {
+      margin-top: 7px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      opacity: 0.84;
+    }
+    .activity-body {
+      min-width: 0;
+    }
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .category-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 999px;
+      background: var(--cat-soft);
+      color: var(--cat);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.4;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+    .category-tag::before {
+      width: 5px;
+      height: 5px;
+      flex: none;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+      opacity: 0.7;
+    }
+    .activity-date {
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .activity-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .activity-title {
+      min-width: 0;
+      margin: 0;
+      color: #12213f;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: -0.015em;
+      overflow-wrap: anywhere;
+    }
+    .delete-button {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      gap: 4px;
+      padding: 7px 9px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      background: rgba(248, 250, 252, 0.82);
+      color: #8492a6;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.4;
+      transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .delete-button:hover {
+      border-color: #fecaca;
+      background: #fff1f2;
+      color: var(--danger);
+      box-shadow: 0 5px 12px -9px rgba(220, 38, 38, 0.6);
+    }
+    .delete-button svg {
+      width: 13px;
+      height: 13px;
+    }
+    .activity-description {
+      margin: 9px 0 0;
+      color: #526179;
+      font-size: 13px;
+      line-height: 1.72;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .activity-description.is-empty {
+      color: #94a3b8;
+      font-style: italic;
+    }
+    /* ---------- 空状态 ---------- */
+    .empty-state {
+      position: relative;
+      display: flex;
+      min-height: 455px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 44px 24px;
+      border: 1px solid #dfeafb;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 50% -8%, rgba(219, 234, 254, 0.86), transparent 48%),
+        linear-gradient(180deg, #f9fcff 0%, #ffffff 100%);
+      box-shadow: inset 0 1px 0 #ffffff;
+      text-align: center;
+    }
+    .empty-state::before {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 248px;
+      height: 248px;
+      border: 1px dashed rgba(59, 130, 246, 0.18);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+      transform: translate(-50%, -52%);
+    }
+    .empty-state::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 370px;
+      height: 370px;
+      border: 1px solid rgba(59, 130, 246, 0.065);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+      transform: translate(-50%, -52%);
+    }
+    .empty-state > * {
+      position: relative;
+      z-index: 1;
+    }
+    .empty-icon {
+      display: grid;
+      width: 72px;
+      height: 72px;
+      place-items: center;
+      margin-bottom: 19px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 22px;
+      background: var(--gradient-blue);
+      color: var(--white);
+      box-shadow: 0 18px 34px -18px rgba(37, 99, 235, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      animation: empty-float 4.5s ease-in-out infinite;
+    }
+    .empty-icon svg {
+      width: 30px;
+      height: 30px;
+    }
+    .empty-state h3 {
+      margin: 0;
+      color: #12213f;
+      font-size: 18.5px;
+      font-weight: 800;
+      line-height: 1.5;
+      letter-spacing: -0.02em;
+    }
+    .empty-state p {
+      max-width: 340px;
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    /* ---------- 提示与页脚 ---------- */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: calc(100% - 32px);
+      padding: 13px 18px;
+      border: 1px solid rgba(96, 165, 250, 0.24);
+      border-radius: 15px;
+      background: linear-gradient(135deg, #0b1736 0%, #17335f 100%);
+      color: var(--white);
+      box-shadow: 0 24px 54px -20px rgba(15, 23, 42, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 14px);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      backdrop-filter: blur(10px);
+    }
+    .toast.is-visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .toast-icon {
+      display: grid;
+      flex: none;
+      width: 26px;
+      height: 26px;
+      place-items: center;
+      border: 1px solid rgba(147, 197, 253, 0.28);
+      border-radius: 50%;
+      background: rgba(59, 130, 246, 0.24);
+      color: #dbeafe;
+    }
+    .toast-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+    .page-footer {
+      margin-top: 30px;
+      color: #8493a8;
+      font-size: 11px;
+      line-height: 1.7;
+      text-align: center;
+    }
+    @keyframes card-in {
+      from {
+        opacity: 0;
+        transform: translateY(7px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes empty-float {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-5px);
+      }
+    }
+    @media (max-width: 1000px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      .form-panel {
+        position: static;
+      }
+      .list-panel {
+        min-height: 0;
+      }
+      .empty-state {
+        min-height: 380px;
+      }
+    }
+    @media (max-width: 720px) {
+      .app-shell {
+        width: calc(100% - 32px);
+        padding: 36px 0 26px;
+      }
+      .app-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 18px;
+        margin-bottom: 26px;
+      }
+      h1 {
+        font-size: clamp(2.15rem, 9vw, 2.8rem);
+      }
+      h1::after {
+        width: 72px;
+        margin-top: 16px;
+      }
+      .subtitle {
+        margin-top: 15px;
+        font-size: 13.5px;
+      }
+      .local-badge {
+        padding: 10px 13px;
+      }
+      .form-panel,
+      .list-panel {
+        padding: 22px;
+        border-radius: 26px;
+      }
+      .list-header {
+        gap: 12px;
+      }
+    }
+    @media (max-width: 600px) {
+      .app-shell {
+        width: calc(100% - 24px);
+        padding: 28px 0 22px;
+      }
+      h1 {
+        font-size: 2.15rem;
+      }
+      .kicker {
+        margin-bottom: 14px;
+        padding: 7px 11px;
+        font-size: 10px;
+      }
+      .subtitle {
+        font-size: 13px;
+      }
+      .local-badge svg {
+        width: 34px;
+        height: 34px;
+        padding: 8px;
+      }
+      .form-panel,
+      .list-panel {
+        padding: 19px;
+        border-radius: 24px;
+      }
+      .panel-heading {
+        gap: 11px;
+        margin-bottom: 20px;
+      }
+      .section-index {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+      }
+      .panel-heading h2 {
+        font-size: 18px;
+      }
+      .sort-hint {
+        padding: 6px 8px;
+        font-size: 10px;
+      }
+      .filter-button {
+        padding: 8px 9px;
+        font-size: 12px;
+      }
+      .activity-card {
+        grid-template-columns: 64px minmax(0, 1fr);
+        gap: 13px;
+        padding: 14px;
+        border-left-width: 5px;
+        border-radius: 19px;
+      }
+      .date-badge {
+        min-height: 74px;
+        border-radius: 14px;
+      }
+      .date-day {
+        font-size: 25px;
+      }
+      .delete-button span {
+        display: none;
+      }
+      .delete-button {
+        padding: 7px;
+      }
+      .activity-title {
+        font-size: 15.5px;
+      }
+      .activity-description {
+        font-size: 12.5px;
+      }
+      .empty-state {
+        min-height: 360px;
+        padding: 36px 20px;
+        border-radius: 20px;
+      }
+      .empty-state::before {
+        width: 210px;
+        height: 210px;
+      }
+      .empty-state::after {
+        width: 310px;
+        height: 310px;
+      }
+      .empty-icon {
+        width: 66px;
+        height: 66px;
+        border-radius: 20px;
+      }
+      .empty-state h3 {
+        font-size: 17px;
+      }
+    }
+    @media (max-width: 430px) {
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+      .filters {
+        gap: 4px;
+        padding: 6px;
+      }
+      .filter-button {
+        gap: 6px;
+        padding: 8px;
+        font-size: 11.5px;
+      }
+      .filter-count {
+        min-width: 18px;
+      }
+      .sort-hint {
+        display: none;
+      }
+      .list-header {
+        margin-bottom: 17px;
+      }
+      .activity-card {
+        grid-template-columns: 60px minmax(0, 1fr);
+        gap: 11px;
+        padding: 13px;
+      }
+      .date-badge {
+        min-height: 70px;
+      }
+      .date-day {
+        font-size: 23px;
+      }
+      .category-tag {
+        padding: 4px 8px;
+      }
+      .empty-state::before {
+        width: 180px;
+        height: 180px;
+      }
+      .empty-state::after {
+        width: 270px;
+        height: 270px;
+      }
+      .empty-state h3 {
+        font-size: 16px;
+      }
+      .empty-state p {
+        font-size: 12.5px;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="header-main">
+        <div class="kicker"><span class="kicker-dot" aria-hidden="true"></span>CAMPUS EVENTS</div>
+        <h1>学院活动<span>信息整理器</span></h1>
+        <p class="subtitle">把讲座、比赛、晚会和社团活动，整理成一张清晰的时间清单。</p>
+      </div>
+      <div class="local-badge" aria-label="数据仅保存在本机浏览器">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+          <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path>
+          <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"></path>
+        </svg>
+        <span>
+          <strong>本地保存</strong>
+          <small>数据仅存于此浏览器</small>
+        </span>
+      </div>
+    </header>
+    <main class="workspace">
+      <!-- 左侧：活动录入表单 -->
+      <section class="panel form-panel" aria-labelledby="formHeading">
+        <div class="panel-heading">
+          <span class="section-index" aria-hidden="true">01</span>
+          <div>
+            <h2 id="formHeading">录入活动</h2>
+            <p>填写基本信息，添加一场新活动。</p>
+          </div>
+        </div>
+        <form id="activityForm" novalidate>
+          <div class="field">
+            <label for="titleInput">活动标题 <span class="required" aria-hidden="true">*</span></label>
+            <input
+              id="titleInput"
+              name="title"
+              type="text"
+              maxlength="80"
+              autocomplete="off"
+              placeholder="例如：秋季校园讲座"
+              aria-required="true"
+              aria-describedby="titleError"
+            >
+            <p class="error-message" id="titleError" role="alert" hidden></p>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label for="dateInput">活动日期 <span class="required" aria-hidden="true">*</span></label>
+              <input
+                id="dateInput"
+                name="date"
+                type="date"
+                aria-required="true"
+                aria-describedby="dateError"
+              >
+              <p class="error-message" id="dateError" role="alert" hidden></p>
+            </div>
+            <div class="field">
+              <label for="categoryInput">活动类别 <span class="required" aria-hidden="true">*</span></label>
+              <select
+                id="categoryInput"
+                name="category"
+                aria-required="true"
+                aria-describedby="categoryError"
+              >
+                <option value="" disabled selected>请选择类别</option>
+                <option value="讲座">讲座</option>
+                <option value="比赛">比赛</option>
+                <option value="晚会">晚会</option>
+                <option value="社团">社团</option>
+                <option value="其他">其他</option>
+              </select>
+              <p class="error-message" id="categoryError" role="alert" hidden></p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="descriptionInput">活动描述 <span class="optional">选填</span></label>
+            <textarea
+              id="descriptionInput"
+              name="description"
+              maxlength="300"
+              placeholder="补充活动地点、亮点或注意事项…"
+            ></textarea>
+          </div>
+          <button class="submit-button" type="submit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>添加活动</span>
+          </button>
+          <p class="storage-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+              <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+            </svg>
+            数据自动保存在本机，不会上传
+          </p>
+        </form>
+      </section>
+      <!-- 右侧：筛选与活动列表 -->
+      <section class="panel list-panel" aria-labelledby="listHeading">
+        <div class="list-header">
+          <div class="panel-heading">
+            <span class="section-index" aria-hidden="true">02</span>
+            <div>
+              <h2 id="listHeading">活动清单</h2>
+              <p id="activityCount">共 0 场活动</p>
+            </div>
+          </div>
+          <span class="sort-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 6h12M8 12h9M8 18h6"></path>
+              <path d="M4 4v16"></path>
+            </svg>
+            日期由近及远
+          </span>
+        </div>
+        <div class="filters" id="filterBar" role="group" aria-label="按活动类别筛选">
+          <button class="filter-button" type="button" data-filter="all" aria-pressed="true">全部<span class="filter-count">0</span></button>
+          <button class="filter-button" type="button" data-filter="讲座" aria-pressed="false">讲座<span class="filter-count">0</span></button>
+          <button class="filter-button" type="button" data-filter="比赛" aria-pressed="false">比赛<span class="filter-count">0</span></button>
+          <button class="filter-button" type="button" data-filter="晚会" aria-pressed="false">晚会<span class="filter-count">0</span></button>
+          <button class="filter-button" type="button" data-filter="社团" aria-pressed="false">社团<span class="filter-count">0</span></button>
+          <button class="filter-button" type="button" data-filter="其他" aria-pressed="false">其他<span class="filter-count">0</span></button>
+        </div>
+        <div class="activity-list" id="activityList" aria-live="polite"></div>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="3"></rect>
+              <path d="M8 3v4M16 3v4M3 10h18"></path>
+              <path d="M8 15h3M8 18h6"></path>
+            </svg>
+          </div>
+          <h3 id="emptyTitle">暂无活动，先录入一个吧</h3>
+          <p id="emptyText">在左侧填写标题、日期和类别，添加你的第一场活动。</p>
+        </div>
+      </section>
+    </main>
+    <footer class="page-footer">活动数据保存在本机浏览器中，换设备或清理浏览器数据后将无法恢复。</footer>
+  </div>
+  <!-- 活动卡片模板：用户输入统一通过 textContent 写入，避免注入 -->
+  <template id="activityTemplate">
+    <article class="activity-card">
+      <div class="date-badge" aria-hidden="true">
+        <strong class="date-day"></strong>
+        <span class="date-month"></span>
+      </div>
+      <div class="activity-body">
+        <div class="card-meta">
+          <span class="category-tag"></span>
+          <time class="activity-date"></time>
+        </div>
+        <div class="activity-heading">
+          <h3 class="activity-title"></h3>
+          <button class="delete-button" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"></path>
+            </svg>
+            <span>删除</span>
+          </button>
+        </div>
+        <p class="activity-description"></p>
+      </div>
+    </article>
+  </template>
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+    <span class="toast-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m5 12 4 4L19 6"></path>
+      </svg>
+    </span>
+    <span id="toastMessage">保存成功</span>
+  </div>
+  <script>
+    (function () {
+      "use strict";
+      const STORAGE_KEY = "campusActivities";
+      const CATEGORIES = ["讲座", "比赛", "晚会", "社团", "其他"];
+      const CATEGORY_CLASS = {
+        讲座: "cat-lecture",
+        比赛: "cat-competition",
+        晚会: "cat-gala",
+        社团: "cat-club",
+        其他: "cat-other"
+      };
+      const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+      const form = document.getElementById("activityForm");
+      const titleInput = document.getElementById("titleInput");
+      const dateInput = document.getElementById("dateInput");
+      const categoryInput = document.getElementById("categoryInput");
+      const descriptionInput = document.getElementById("descriptionInput");
+      const filterBar = document.getElementById("filterBar");
+      const filterButtons = Array.from(document.querySelectorAll(".filter-button"));
+      const activityList = document.getElementById("activityList");
+      const activityCount = document.getElementById("activityCount");
+      const emptyState = document.getElementById("emptyState");
+      const emptyTitle = document.getElementById("emptyTitle");
+      const emptyText = document.getElementById("emptyText");
+      const cardTemplate = document.getElementById("activityTemplate");
+      const toast = document.getElementById("toast");
+      const toastMessage = document.getElementById("toastMessage");
+      const FIELD_ELEMENTS = {
+        title: { input: titleInput, error: document.getElementById("titleError") },
+        date: { input: dateInput, error: document.getElementById("dateError") },
+        category: { input: categoryInput, error: document.getElementById("categoryError") }
+      };
+      let activities = loadActivities();
+      let activeCategory = "all";
+      let toastTimer = null;
+      /* ---------- 本地存储 ---------- */
+      function createId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+        return "activity-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+      }
+      function parseIsoDate(value) {
+        if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          return null;
+        }
+        const parts = value.split("-").map(Number);
+        const date = new Date(parts[0], parts[1] - 1, parts[2]);
+        if (
+          date.getFullYear() !== parts[0] ||
+          date.getMonth() !== parts[1] - 1 ||
+          date.getDate() !== parts[2]
+        ) {
+          return null;
+        }
+        return date;
+      }
+      function normalizeActivity(raw) {
+        if (!raw || typeof raw !== "object") {
+          return null;
+        }
+        const title = typeof raw.title === "string" ? raw.title.trim().slice(0, 80) : "";
+        const date = typeof raw.date === "string" ? raw.date : "";
+        const category = CATEGORIES.includes(raw.category) ? raw.category : "";
+        const description = typeof raw.description === "string"
+          ? raw.description.trim().slice(0, 300)
+          : "";
+        if (!title || !parseIsoDate(date) || !category) {
+          return null;
+        }
+        return {
+          id: typeof raw.id === "string" && raw.id ? raw.id : createId(),
+          title: title,
+          date: date,
+          category: category,
+          description: description,
+          createdAt: Number.isFinite(raw.createdAt) ? raw.createdAt : Date.now()
+        };
+      }
+      function loadActivities() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            return [];
+          }
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) {
+            return [];
+          }
+          const seenIds = new Set();
+          return parsed
+            .map(normalizeActivity)
+            .filter(function (activity) {
+              if (!activity || seenIds.has(activity.id)) {
+                return false;
+              }
+              seenIds.add(activity.id);
+              return true;
+            });
+        } catch (error) {
+          console.warn("读取本地活动数据失败：", error);
+          return [];
+        }
+      }
+      function persistActivities() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(activities));
+          return true;
+        } catch (error) {
+          console.warn("保存本地活动数据失败：", error);
+          return false;
+        }
+      }
+      /* ---------- 表单校验与提示 ---------- */
+      function setFieldError(name, message) {
+        const field = FIELD_ELEMENTS[name];
+        field.error.textContent = message;
+        field.error.hidden = false;
+        field.input.classList.add("is-invalid");
+        field.input.setAttribute("aria-invalid", "true");
+      }
+      function clearFieldError(name) {
+        const field = FIELD_ELEMENTS[name];
+        field.error.textContent = "";
+        field.error.hidden = true;
+        field.input.classList.remove("is-invalid");
+        field.input.removeAttribute("aria-invalid");
+      }
+      function clearAllFieldErrors() {
+        Object.keys(FIELD_ELEMENTS).forEach(clearFieldError);
+      }
+      function showToast(message) {
+        toast.classList.remove("is-visible");
+        toastMessage.textContent = message;
+        window.clearTimeout(toastTimer);
+        window.requestAnimationFrame(function () {
+          toast.classList.add("is-visible");
+        });
+        toastTimer = window.setTimeout(function () {
+          toast.classList.remove("is-visible");
+        }, 2400);
+      }
+      /* ---------- 渲染 ---------- */
+      function getSortedVisibleActivities() {
+        return activities
+          .filter(function (activity) {
+            return activeCategory === "all" || activity.category === activeCategory;
+          })
+          .slice()
+          .sort(function (a, b) {
+            return a.date.localeCompare(b.date) || a.createdAt - b.createdAt;
+          });
+      }
+      function formatFullDate(isoDate) {
+        const date = parseIsoDate(isoDate);
+        if (!date) {
+          return "";
+        }
+        return date.getFullYear() + "年" +
+          (date.getMonth() + 1) + "月" +
+          date.getDate() + "日 " +
+          WEEKDAYS[date.getDay()];
+      }
+      function createActivityCard(activity) {
+        const fragment = cardTemplate.content.cloneNode(true);
+        const card = fragment.querySelector(".activity-card");
+        const date = parseIsoDate(activity.date);
+        const titleElement = fragment.querySelector(".activity-title");
+        const deleteButton = fragment.querySelector(".delete-button");
+        card.dataset.id = activity.id;
+        card.classList.add(CATEGORY_CLASS[activity.category] || "cat-other");
+        fragment.querySelector(".date-day").textContent = String(date.getDate()).padStart(2, "0");
+        fragment.querySelector(".date-month").textContent = (date.getMonth() + 1) + "月";
+        fragment.querySelector(".category-tag").textContent = activity.category;
+        const timeElement = fragment.querySelector(".activity-date");
+        timeElement.dateTime = activity.date;
+        timeElement.textContent = formatFullDate(activity.date);
+        titleElement.textContent = activity.title;
+        titleElement.id = "activity-title-" + activity.id;
+        card.setAttribute("aria-labelledby", titleElement.id);
+        const descriptionElement = fragment.querySelector(".activity-description");
+        descriptionElement.textContent = activity.description || "暂无描述";
+        descriptionElement.classList.toggle("is-empty", !activity.description);
+        deleteButton.dataset.id = activity.id;
+        deleteButton.setAttribute("aria-label", "删除活动：" + activity.title);
+        return fragment;
+      }
+      function updateFilterButtons() {
+        filterButtons.forEach(function (button) {
+          const filter = button.dataset.filter;
+          const count = filter === "all"
+            ? activities.length
+            : activities.filter(function (activity) {
+                return activity.category === filter;
+              }).length;
+          button.querySelector(".filter-count").textContent = String(count);
+          button.setAttribute("aria-pressed", String(filter === activeCategory));
+        });
+      }
+      function updateEmptyState(isEmpty) {
+        emptyState.hidden = !isEmpty;
+        if (!isEmpty) {
+          return;
+        }
+        if (activities.length === 0) {
+          emptyTitle.textContent = "暂无活动，先录入一个吧";
+          emptyText.textContent = "在左侧填写标题、日期和类别，添加你的第一场活动。";
+        } else {
+          emptyTitle.textContent = "该类别下暂无活动";
+          emptyText.textContent = "当前筛选结果为空，换个类别看看，或录入一场新活动。";
+        }
+      }
+      function render() {
+        const visibleActivities = getSortedVisibleActivities();
+        updateFilterButtons();
+        activityList.replaceChildren();
+        visibleActivities.forEach(function (activity) {
+          activityList.appendChild(createActivityCard(activity));
+        });
+        activityCount.textContent = activities.length === 0
+          ? "共 0 场活动"
+          : "共 " + activities.length + " 场活动" +
+            (activeCategory === "all" ? "" : " · 当前显示 " + visibleActivities.length + " 场");
+        updateEmptyState(visibleActivities.length === 0);
+      }
+      /* ---------- 交互事件 ---------- */
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        clearAllFieldErrors();
+        const title = titleInput.value.trim();
+        const date = dateInput.value;
+        const category = categoryInput.value;
+        const description = descriptionInput.value.trim();
+        const errors = [];
+        if (!title) {
+          errors.push({ name: "title", message: "请输入活动标题" });
+        } else if (title.length > 80) {
+          errors.push({ name: "title", message: "活动标题不能超过 80 个字符" });
+        }
+        if (!date) {
+          errors.push({ name: "date", message: "请选择活动日期" });
+        } else if (!parseIsoDate(date)) {
+          errors.push({ name: "date", message: "活动日期格式不正确" });
+        }
+        if (!CATEGORIES.includes(category)) {
+          errors.push({ name: "category", message: "请选择活动类别" });
+        }
+        if (errors.length > 0) {
+          errors.forEach(function (error) {
+            setFieldError(error.name, error.message);
+          });
+          FIELD_ELEMENTS[errors[0].name].input.focus();
+          return;
+        }
+        activities.push({
+          id: createId(),
+          title: title,
+          date: date,
+          category: category,
+          description: description,
+          createdAt: Date.now()
+        });
+        const saved = persistActivities();
+        form.reset();
+        categoryInput.value = "";
+        activeCategory = "all";
+        clearAllFieldErrors();
+        render();
+        titleInput.focus();
+        showToast(saved ? "保存成功" : "保存成功（本地存储不可用）");
+      });
+      Object.keys(FIELD_ELEMENTS).forEach(function (name) {
+        const input = FIELD_ELEMENTS[name].input;
+        const eventName = input.tagName === "SELECT" || input.type === "date" ? "change" : "input";
+        input.addEventListener(eventName, function () {
+          clearFieldError(name);
+        });
+      });
+      filterBar.addEventListener("click", function (event) {
+        const button = event.target.closest(".filter-button");
+        if (!button) {
+          return;
+        }
+        activeCategory = button.dataset.filter;
+        render();
+      });
+      activityList.addEventListener("click", function (event) {
+        const deleteButton = event.target.closest(".delete-button");
+        if (!deleteButton) {
+          return;
+        }
+        const activityId = deleteButton.dataset.id;
+        const activity = activities.find(function (item) {
+          return item.id === activityId;
+        });
+        if (!activity) {
+          return;
+        }
+        const confirmed = window.confirm(
+          "确定要删除「" + activity.title + "」吗？删除后不可恢复。"
+        );
+        if (!confirmed) {
+          return;
+        }
+        activities = activities.filter(function (item) {
+          return item.id !== activityId;
+        });
+        const saved = persistActivities();
+        render();
+        showToast(saved ? "活动已删除" : "活动已删除（本地存储同步失败）");
+      });
+      window.addEventListener("storage", function (event) {
+        if (event.key === STORAGE_KEY || event.key === null) {
+          activities = loadActivities();
+          render();
+        }
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>
